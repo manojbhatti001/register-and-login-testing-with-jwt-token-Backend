@@ -1,14 +1,9 @@
 const User = require('../models/userSchema');
-const jwt = require('jsonwebtoken');
-const scretkey = 'manoj@bhatti';
+
+const { setUser, getUser } = require('../services/auth');
 
 
-function setUser(user) {
-  const payload = {
-    ...user,
-  }
-  return jwt.sign(payload,scretkey)
-}
+
 const registerUser = async (req, res) => {
   const { firstname, lastname, email, username, password } = req.body;
 
@@ -49,11 +44,12 @@ const login = async (req,res) => {
 
   try {
     const user = await User.findOne({ $or: [{ username }, { password }] });
+    
     if(!user){
       return res.status(400).json({message:'username or password is wrong'})
     }
     console.log(user);
-    const token = setUser(user)
+    const token = setUser(user);
       
     res.send({ message: 'User Login successfully',token});
 
@@ -63,10 +59,14 @@ const login = async (req,res) => {
   }
 }
 const verify = async (req,res) => {
-  const { token } = req.body;
-  console.log(req.body)
-  if(token!=''|| token!='undefined'){
-    res.send('token recived');
+  console.log("request in veryfincation ",req)
+  const token = req.headers.authorization;
+  const user = getUser(token);
+  if(!user){
+    return res.status(400).json({message:'token is wrong'})
   }
+  console.log("user in verify ",user);
+  res.send({ message: 'User Login successfully',user});
+  
 }
-module.exports = { registerUser, login };
+module.exports = { registerUser, login ,verify };
